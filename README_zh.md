@@ -31,7 +31,7 @@ git clone git@github.com:stevenlii/epub2md.git
 cd epub2md
 
 # 创建虚拟环境（推荐）
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate    # macOS / Linux
 # venv\Scripts\activate       # Windows
 
@@ -43,13 +43,13 @@ pip install -r requirements.txt
 
 ```bash
 # 基本用法：输出同名 .md 文件到当前目录
-python epub2md.py book.epub
+python3 epub2md.py book.epub
 
 # 指定输出路径
-python epub2md.py book.epub -o output/book.md
+python3 epub2md.py book.epub -o output/book.md
 
 # 输出到指定目录（目录会自动创建）
-python epub2md.py book.epub -o ./mybook/book.md
+python3 epub2md.py book.epub -o ./mybook/book.md
 ```
 
 ### 输出结构

@@ -31,7 +31,7 @@ git clone git@github.com:stevenlii/epub2md.git
 cd epub2md
 
 # Create a virtual environment (recommended)
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate    # macOS / Linux
 # venv\Scripts\activate       # Windows
 
@@ -43,13 +43,13 @@ pip install -r requirements.txt
 
 ```bash
 # Basic usage: outputs a .md file with the same name in the current directory
-python epub2md.py book.epub
+python3 epub2md.py book.epub
 
 # Specify output path
-python epub2md.py book.epub -o output/book.md
+python3 epub2md.py book.epub -o output/book.md
 
 # Output to a specific directory (created automatically)
-python epub2md.py book.epub -o ./mybook/book.md
+python3 epub2md.py book.epub -o ./mybook/book.md
 ```
 
 ### Output Structure
