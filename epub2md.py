@@ -230,6 +230,113 @@ def clean_headings(soup: BeautifulSoup) -> None:
                 tag.unwrap()
 
 
+def remove_empty_headings(soup: BeautifulSoup) -> None:
+    """删除没有可见文本的空标题（它们在 Markdown 大纲里会显示成空白条目）"""
+    for level in range(1, 7):
+        for heading in soup.find_all(f"h{level}"):
+            text = heading.get_text(strip=True)
+            if not text:
+                heading.decompose()
+
+
+def normalize_fake_headings(soup: BeautifulSoup, code_classes: set) -> None:
+    """
+    把 EPUB 中为了视觉样式而错误标记为标题的内容降级为普通段落。
+    例如：代码输出 token（an/for/m/.）、参数名（r）、短标签（输出：/结果：/RAG/指令）。
+    """
+    if not code_classes:
+        code_classes = set()
+
+    # 常见“标签型”短标题，不是真正的章节标题
+    label_patterns = re.compile(
+        r"^(输出|结果|输入|注意|提示|警告|说明|指令|命令|示例|代码|RAG|API)$",
+        re.IGNORECASE,
+    )
+
+    def has_code_font(tag) -> bool:
+        """检查标签或其子标签是否使用了代码字体样式类"""
+        for span in tag.find_all("span"):
+            if any(c in code_classes for c in span.get("class", [])):
+                return True
+        return False
+
+    for level in range(1, 7):
+        for heading in soup.find_all(f"h{level}"):
+            text = heading.get_text(strip=True)
+            if not text:
+                continue
+
+            # 1) 空标题（理论上已被 remove_empty_headings 处理，这里做兜底）
+            if not text.strip():
+                heading.decompose()
+                continue
+
+            # 2) 极短且使用代码字体的标题 → 行内代码段落
+            if len(text) <= 3 and has_code_font(heading):
+                p = soup.new_tag("p")
+                code = soup.new_tag("code")
+                code.string = text
+                p.append(code)
+                heading.replace_with(p)
+                continue
+
+            # 3) 常见短标签（输出：/结果：/RAG/指令）→ 加粗段落
+            if label_patterns.match(text) or label_patterns.match(text.rstrip("：:")):
+                p = soup.new_tag("p")
+                strong = soup.new_tag("strong")
+                strong.string = text
+                p.append(strong)
+                heading.replace_with(p)
+                continue
+
+            # 4) 长度 <=2 的纯 ASCII/标点标题（如 "." "r" "an"）→ 行内代码段落
+            if len(text) <= 2 and re.match(r"^[\x00-\x7F]+$", text):
+                p = soup.new_tag("p")
+                code = soup.new_tag("code")
+                code.string = text
+                p.append(code)
+                heading.replace_with(p)
+                continue
+
+
+def normalize_heading_hierarchy(soup: BeautifulSoup) -> None:
+    """
+    修复 EPUB 内部标题层级不一致的问题。
+    例如原书把"微调"标记为 h1，但它实际上和前面的"语言建模"(h3) 同级，
+    这会导致 Obsidian 大纲里出现奇怪的嵌套。
+    """
+    # BeautifulSoup 的 find_all 按文档顺序返回；lxml 解析器不保证 sourceline，
+    # 因此直接利用 find_all 的顺序。
+    headings = []
+    for heading in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"]):
+        level = int(heading.name[1])
+        headings.append((level, heading))
+
+    if not headings:
+        return
+
+    # 第一个标题通常代表本章/本节入口（如"第X章"或"前言"）
+    first_level = headings[0][0]
+    min_section_level = first_level + 1
+
+    chapter_pattern = re.compile(r"^第\s*[0-9一二三四五六七八九十]+\s*章")
+
+    for idx, (level, heading) in enumerate(headings):
+        text = heading.get_text(strip=True)
+        if not text:
+            continue
+
+        # 跳过第一个标题和真正的章节标题
+        if idx == 0 or chapter_pattern.match(text):
+            continue
+
+        # 如果一个标题层级比"最小合理层级"还浅（例如 h1 出现在 h3 之后），
+        # 且文本较短，则把它降级到 min_section_level
+        if level < min_section_level and len(text) <= 6:
+            new_level = min(min_section_level, 6)
+            heading.name = f"h{new_level}"
+
+
 def process_xhtml(
     xhtml_content: str,
     xhtml_path: str,
@@ -251,10 +358,19 @@ def process_xhtml(
     # 当前 XHTML 所在目录（用于解析相对路径）
     xhtml_dir = os.path.dirname(xhtml_path)
 
-    # 1) 预处理标题：去掉标题里的 <b>/<span>，避免 "第**4**章"
+    # 1) 先处理 EPUB 中误用为标题的短 token/标签（此时还保留原始 CSS class 信息）
+    normalize_fake_headings(soup, code_classes or set())
+
+    # 2) 删除空标题
+    remove_empty_headings(soup)
+
+    # 3) 修复 EPUB 内部标题层级不一致的问题（例如 h1 的 "微调" 出现在 h3 的 "语言建模" 之后）
+    normalize_heading_hierarchy(soup)
+
+    # 4) 清理标题内部的加粗/斜体/span 标签，避免 "第**4**章"
     clean_headings(soup)
 
-    # 2) 预处理代码块（从 CSS 样式类识别）
+    # 5) 预处理代码块（从 CSS 样式类识别）
     process_styled_code(soup, code_classes or set())
 
     # 3) 处理图片：提取到 images/ 目录，改写 src

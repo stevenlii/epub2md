@@ -91,6 +91,12 @@ output/
 - Removes `<b>`, `<span>` and other inline tags from headings to prevent `第**4**章` in Obsidian
 - Merges chapter numbers with title text: `## Chapter 4` + `## Text Classification` → `## Chapter 4 Text Classification`
 - Merges adjacent bold markers: `**tra****in****ing**` → `**training**`
+- Removes empty headings that appear as blank entries in the outline
+- Detects and downgrades fake headings used for visual styling in some EPUBs:
+  - Code output tokens: `an`, `for`, `m`, `.`
+  - Parameter names: `r`
+  - Labels: `输出：`, `结果：`, `RAG`, `指令`
+- Normalizes inconsistent heading levels (e.g., an `h1` "微调" appearing after `h3` sections is demoted to `h3`)
 
 ## Example
 

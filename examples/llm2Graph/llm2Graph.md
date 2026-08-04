@@ -528,7 +528,7 @@ Maarten致谢
 
 # 第一部分
 
-# 理解语言模型
+## 理解语言模型
 
 
 ---
@@ -885,7 +885,7 @@ LLM对AI领域产生了巨大影响，随着ChatGPT（GPT-3.5）的发布、普�
 
 第一步称为**预训练**，占用了创建LLM过程中的大部分算力和训练时间。LLM在海量互联网文本语料库上进行训练，使模型能够学习语法、上下文和语言模式。这个宽泛的训练阶段并不是针对特定任务或应用的，而仅仅用于预测下一个词。由此产生的模型通常被称为基础模型或基座模型。这些模型通常不会遵循指令。
 
-# 微调
+### 微调
 
 1. Hugo Touvron et al. “Llama 2: Open Foundation and Fine-Tuned Chat Models.” arXiv preprint arXiv:2307.09288 (2023).
 
@@ -1176,13 +1176,16 @@ generation_output = model.generate(
 )
 # 打印输出
 print(tokenizer.decode(generation_output[0]))
+```
+
+**输出：**
+
+```
 <s> Write an email apologizing to Sarah for the tragic gardening mishap.
 Explain how it happened.<|assistant|> Subject: My Sincere Apologies for the
 Gardening Mishap
 Dear
 ```
-
-### 输出：
 
 粗体文本是模型生成的20个词元。
 
@@ -1214,35 +1217,30 @@ for id in input_ids[0]:
 ```
 <s>
 Write
+an
 email
 apolog
 izing
 to
 Sarah
+for
 the
 trag
 ic
 garden
 ing
+m
 ish
 ap
+.
 Exp
 lain
 how
 it
 happened
+.
 <|assistant|>
 ```
-
-### an
-
-### for
-
-### m
-
-### .
-
-### .
 
 这就是分词器分解输入提示词的过程。需要注意以下几点：
 
@@ -4103,7 +4101,7 @@ LLM可能会自信地生成错误信息，这被称为幻觉（hallucination）�
 
 描述LLM应该扮演什么角色。例如，如果你想问一个关于天体物理学的问题，可以使用“你是一位天体物理学专家”。
 
-### 指令
+**指令**
 
 任务本身。指令应该尽可能具体，避免留下太大的解释空间。
 
@@ -5486,7 +5484,7 @@ cost approximately 1911.65 EUR with an exchange rate of 0.85 EUR for 1 USD.'}
 
 图8-2：重排器是语义搜索的第二大核心类型，重排器能够接收搜索查询与初始结果集，并根据相关性进行重新排序，从而显著提升结果质量
 
-### RAG
+**RAG**
 
 随着文本生成模型能力的持续增强，一种融合查询响应功能的新型搜索系统应运而生——RAG，成为语义搜索的第三大类型。图8-3直观展现了此类生成式搜索系统的典型架构。
 
@@ -5670,10 +5668,6 @@ def keyword_search(query, top_k=3, num_candidates=15):
 pus_id']].replace("\n", " ")))
 ```
 
-#
-
-###
-
 现在，当我们针对同一查询进行搜索时，得到的结果与稠密检索的呈现方式有所不同：
 
 ```
@@ -5816,13 +5810,16 @@ results.results
 ```
 for idx, result in enumerate(results.results):
   print(idx, result.relevance_score , result.document.text)
+```
+
+**输出：**
+
+```
 0 0.1698185 It has also received praise from many astronomers for its scientific accuracy and portrayal of theoretical astrophysics
 1 0.07004896 The film had a worldwide gross over $677 million (and $773 million with subsequent re-releases), making it the tenth-highest grossing film of 2014
 2 0.0043994132 Caltech theoretical physicist and 2017 Nobel laureate in Physics[4]
 Kip Thorne was an executive producer, acted as a scientific consultant, and wrote a tie-in book, The Science of Interstellar
 ```
-
-### 输出：
 
 这表明重排器对第一个结果更具信心，为其分配了超过0.16的相关性分数，而其他结果的相关性分数则显著偏低。
 
@@ -6107,10 +6104,6 @@ rag = RetrievalQA.from_chain_type(
     verbose=True
 )
 ```
-
-###
-
-###
 
 现在，我们可以调用模型并提出问题：
 
@@ -9160,7 +9153,9 @@ model = get_peft_model(model, peft_config)
 
 需要注意以下参数。
 
-### r
+```
+r
+```
 
 压缩矩阵的秩（回顾图12-13）。增大这个值会使压缩矩阵变大，从而降低压缩率，进而提高模型的表示能力。该参数的值通常在4和64之间。
 
@@ -9942,7 +9937,7 @@ DeepSeek-R1的目标就是成为更具实用价值的模型。因此，研发团
 
 # 链接资源 [由于项目更新迭代，原书所提供链接内容可能过时或失效，仅供参考。——编者注](#footnote-27-4)
 
-# 前言
+## 前言
 
 ·https://www.learnpython.org/
 
@@ -10712,7 +10707,7 @@ Yannis Kilcher的YouTube视频“[GRPO Explained] DeepSeekMath: Pushing the Limi
 
 论文“Galactica: A Large Language Model for Science”
 
-# 作者简介
+## 作者简介
 
 ·https://jalammar.github.io
 
