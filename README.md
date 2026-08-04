@@ -1,141 +1,143 @@
 # epub2md
 
-> 将 EPUB 电子书解压并转换为 Markdown 文件，自动提取图片、识别代码块、清理标题层级。
+[English](README.md) | [中文](README_zh.md)
 
-## 简介
+> Convert EPUB ebooks to Markdown files with automatic image extraction, code block detection, and heading cleanup.
 
-EPUB 本质上是一个 ZIP 压缩包，里面包含 XHTML、图片、CSS 等资源。`epub2md` 脚本做的事情：
+## Overview
 
-1. **解压 EPUB** — 读取 ZIP 结构，解析 OPF 文件获取章节阅读顺序
-2. **逐章转换** — 按 spine 顺序，将每个 XHTML 文件转换为 Markdown
-3. **提取图片** — 扫描 `<img>` 标签，基于 XHTML 位置解析相对路径，提取到 `images/` 目录
-4. **识别代码** — 自动扫描 CSS 找出等宽字体 class，把对应内容识别为代码块
-5. **清理标题** — 去掉标题内的加粗标记，合并章节编号与标题文本
-6. **合并输出** — 所有章节合并为单个 `.md` 文件
+EPUB is essentially a ZIP archive containing XHTML, images, CSS, and other resources. The `epub2md` script does the following:
 
-## 环境要求
+1. **Unzip EPUB** — Reads the ZIP structure and parses the OPF file to determine chapter reading order
+2. **Chapter-by-chapter conversion** — Converts each XHTML file to Markdown following the spine order
+3. **Image extraction** — Scans `<img>` tags, resolves relative paths based on XHTML location, and extracts images to an `images/` directory
+4. **Code detection** — Automatically scans CSS to find monospace font classes and identifies corresponding content as code blocks
+5. **Heading cleanup** — Removes inline bold/italic tags from headings and merges chapter numbers with title text
+6. **Merged output** — Combines all chapters into a single `.md` file
 
-- **Python 3.8+**（推荐 3.10+）
-- 依赖包（见 `requirements.txt`）：
-  - `beautifulsoup4` — HTML/XHTML 解析
-  - `markdownify` — HTML → Markdown 转换
-  - `lxml` — XML/HTML 解析引擎
+## Requirements
 
-## 安装
+- **Python 3.8+** (3.10+ recommended)
+- Dependencies (see `requirements.txt`):
+  - `beautifulsoup4` — HTML/XHTML parsing
+  - `markdownify` — HTML to Markdown conversion
+  - `lxml` — XML/HTML parsing engine
+
+## Installation
 
 ```bash
-# 克隆仓库
+# Clone the repository
 git clone git@github.com:stevenlii/epub2md.git
 cd epub2md
 
-# 创建虚拟环境（推荐）
+# Create a virtual environment (recommended)
 python -m venv venv
 source venv/bin/activate    # macOS / Linux
 # venv\Scripts\activate       # Windows
 
-# 安装依赖
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-## 用法
+## Usage
 
 ```bash
-# 基本用法：输出同名 .md 文件到当前目录
+# Basic usage: outputs a .md file with the same name in the current directory
 python epub2md.py book.epub
 
-# 指定输出路径
+# Specify output path
 python epub2md.py book.epub -o output/book.md
 
-# 输出到指定目录（目录会自动创建）
+# Output to a specific directory (created automatically)
 python epub2md.py book.epub -o ./mybook/book.md
 ```
 
-### 输出结构
+### Output Structure
 
 ```
 output/
-├── book.md              # 合并后的 Markdown 文件
-└── images/              # 所有提取的图片
+├── book.md              # Merged Markdown file
+└── images/              # All extracted images
     ├── image_0001.jpg
     ├── image_0002.png
     └── ...
 ```
 
-### 命令行参数
+### Command-line Arguments
 
-| 参数 | 说明 |
-|------|------|
-| `epub` | EPUB 文件路径（必填） |
-| `-o, --output` | 输出 Markdown 文件路径（可选，默认同名 `.md`） |
+| Argument | Description |
+|----------|-------------|
+| `epub` | Path to the EPUB file (required) |
+| `-o, --output` | Output Markdown file path (optional, defaults to same-name `.md`) |
 
-## 功能特性
+## Features
 
-### 图片提取
+### Image Extraction
 
-- 自动解析 XHTML 中的 `<img>` 标签
-- 基于 XHTML 文件位置正确解析相对路径（如 `../images/xxx.jpg`）
-- 去重：同一张图片只提取一次
-- 在 Markdown 中用相对路径 `![](images/image_0001.jpg)` 引用
+- Automatically parses `<img>` tags in XHTML
+- Correctly resolves relative paths based on XHTML file location (e.g., `../images/xxx.jpg`)
+- Deduplication: each image is extracted only once
+- References images using relative paths like `![](images/image_0001.jpg)` in Markdown
 
-### 代码块识别
+### Code Block Detection
 
-- 自动扫描 EPUB 内的 CSS 文件，找出使用等宽字体的 class
-- 识别 `Source Code Pro`、`monospace`、`Courier`、`Consolas`、`Menlo` 等常见等宽字体
-- 把连续的代码段落合并为标准 fenced code block（` ``` ` 围栏格式）
-- 注释行（如 `# 加载数据`）也能正确放入同一代码块
+- Automatically scans CSS files within the EPUB to find classes using monospace fonts
+- Recognizes common monospace fonts: `Source Code Pro`, `monospace`, `Courier`, `Consolas`, `Menlo`, etc.
+- Merges consecutive code paragraphs into standard fenced code blocks (` ``` ` syntax)
+- Comment lines (e.g., `# Load data`) are correctly included in the same code block
 
-### 标题清理
+### Heading Cleanup
 
-- 去掉标题内部的 `<b>`、`<span>` 等标签，避免 Obsidian 里出现 `第**4**章`
-- 合并章节编号与标题文本：`## 第4章` + `## 文本分类` → `## 第4章 文本分类`
-- 合并相邻的加粗标记：`**训****练****集**` → `**训练集**`
+- Removes `<b>`, `<span>` and other inline tags from headings to prevent `第**4**章` in Obsidian
+- Merges chapter numbers with title text: `## Chapter 4` + `## Text Classification` → `## Chapter 4 Text Classification`
+- Merges adjacent bold markers: `**tra****in****ing**` → `**training**`
 
-## 示例
+## Example
 
-仓库包含一个完整示例，位于 `examples/llm2Graph/`：
+The repository includes a complete example in `examples/llm2Graph/`:
 
 ```
 examples/llm2Graph/
-├── llm2Graph.epub        # 原始 EPUB 文件
-├── llm2Graph.md          # 转换后的 Markdown
-└── images/               # 提取的 384 张图片
+├── llm2Graph.epub        # Original EPUB file
+├── llm2Graph.md          # Converted Markdown
+└── images/               # 384 extracted images
     ├── image_0001.jpg
     ├── image_0002.jpg
-    └── ... (共 384 张)
+    └── ... (384 total)
 ```
 
-这个示例展示了一个典型的技术书籍转换结果：
-- 31 章全部转换
-- 384 张图片全部提取，0 缺失
-- 代码块、标题层级、图片引用均正确
+This example demonstrates a typical technical book conversion:
+- 31 chapters fully converted
+- 384 images extracted, 0 missing
+- Code blocks, heading hierarchy, and image references all correct
 
-## 技术细节
+## Technical Details
 
-### 工作流程
+### Workflow
 
 ```
-EPUB 文件
+EPUB File
   │
-  ├─ 1. 读取 META-INF/container.xml → 找到 OPF 路径
-  ├─ 2. 解析 OPF → 获取 manifest（资源清单）和 spine（阅读顺序）
-  ├─ 3. 扫描 CSS → 检测等宽字体 class（用于代码识别）
+  ├─ 1. Read META-INF/container.xml → Find OPF path
+  ├─ 2. Parse OPF → Get manifest (resource list) and spine (reading order)
+  ├─ 3. Scan CSS → Detect monospace font classes (for code identification)
   │
-  ├─ 4. 按 spine 顺序逐章处理：
-  │      ├─ 清理标题内部标签
-  │      ├─ 识别并合并代码块
-  │      ├─ 提取图片到 images/ 目录
-  │      ├─ HTML → Markdown 转换
-  │      └─ 后处理（合并加粗标记、章节标题等）
+  ├─ 4. Process chapters in spine order:
+  │      ├─ Clean inline tags inside headings
+  │      ├─ Detect and merge code blocks
+  │      ├─ Extract images to images/ directory
+  │      ├─ Convert HTML → Markdown
+  │      └─ Post-processing (merge bold markers, chapter headings, etc.)
   │
-  └─ 5. 合并所有章节 → 输出单个 .md 文件
+  └─ 5. Merge all chapters → Output a single .md file
 ```
 
-### 为什么不用现成的工具？
+### Why not use existing tools?
 
-- **pandoc**：功能强大但对 EPUB 内 CSS 样式驱动的代码识别不足
-- **calibre**：输出格式不够干净，代码块和标题常有格式问题
-- 本脚本针对常见 EPUB 排版做了专门处理（标题内嵌加粗、CSS 样式标记代码等）
+- **pandoc**: Powerful but lacks CSS-driven code detection for EPUB content
+- **calibre**: Output formatting is not clean; code blocks and headings often have formatting issues
+- This script handles common EPUB formatting patterns specifically (inline bold in headings, CSS-styled code spans, etc.)
 
 ## License
 
-[MIT License](LICENSE) — 可自由使用、修改、分发。
+[MIT License](LICENSE) — Free to use, modify, and distribute.
