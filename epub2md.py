@@ -91,6 +91,63 @@ def parse_opf(epub_zip: zipfile.ZipFile, opf_path: str) -> dict:
     return {"manifest": manifest, "spine": spine, "opf_dir": opf_dir}
 
 
+def parse_toc(epub_zip: zipfile.ZipFile, opf_dir: str = "") -> dict:
+    """
+    解析 EPUB 的目录文件（toc.ncx 或 nav.xhtml），返回 {xhtml文件名: 标题} 映射。
+    用于处理章节标题是图片、正文没有文字标题的情况。
+    """
+    toc_map = {}
+
+    # 1) EPUB2: toc.ncx
+    ncx_paths = ["toc.ncx"]
+    if opf_dir:
+        ncx_paths.append(os.path.join(opf_dir, "toc.ncx"))
+
+    for ncx_path in ncx_paths:
+        try:
+            ncx_xml = epub_zip.read(ncx_path).decode("utf-8", errors="replace")
+        except KeyError:
+            continue
+        soup = BeautifulSoup(ncx_xml, "xml")
+        # NCX 使用驼峰命名（navPoint），XML 解析器大小写敏感
+        for navpoint in soup.find_all("navPoint"):
+            label_tag = navpoint.find("text")
+            content_tag = navpoint.find("content")
+            if not label_tag or not content_tag:
+                continue
+            title = label_tag.get_text(strip=True)
+            src = content_tag.get("src", "")
+            # 去掉 fragment（#filepos...）
+            src_clean = src.split("#")[0]
+            if src_clean and src_clean not in toc_map:
+                toc_map[src_clean] = title
+        if toc_map:
+            break
+
+    # 2) EPUB3: nav.xhtml (nav epub:type="toc")
+    if not toc_map:
+        nav_paths = ["nav.xhtml", "nav.html", "OEBPS/nav.xhtml"]
+        if opf_dir:
+            nav_paths = [os.path.join(opf_dir, p) for p in nav_paths] + nav_paths
+        for nav_path in nav_paths:
+            try:
+                nav_xml = epub_zip.read(nav_path).decode("utf-8", errors="replace")
+            except KeyError:
+                continue
+            soup = BeautifulSoup(nav_xml, "lxml")
+            # EPUB3: <nav epub:type="toc"><ol><li><a href="...">Title</a></li></ol></nav>
+            for a_tag in soup.find_all("a"):
+                href = a_tag.get("href", "")
+                href_clean = href.split("#")[0]
+                title = a_tag.get_text(strip=True)
+                if href_clean and title and href_clean not in toc_map:
+                    toc_map[href_clean] = title
+            if toc_map:
+                break
+
+    return toc_map
+
+
 def detect_code_classes(epub_zip: zipfile.ZipFile, opf_dir: str = "") -> set:
     """
     扫描 EPUB 中的 CSS 文件，找出使用等宽字体（Source Code Pro、monospace、Courier 等）
@@ -356,6 +413,7 @@ def process_xhtml(
     image_manifest: dict,
     manifest: dict,
     code_classes: set = None,
+    toc_map: dict = None,
 ) -> str:
     """
     将单个 XHTML 转换为 Markdown，同时提取图片。
@@ -433,6 +491,22 @@ def process_xhtml(
     # 移除 script 和 style 标签
     for tag in soup.find_all(["script", "style"]):
         tag.decompose()
+
+    # 如果章节没有文字标题（标题是图片），从 EPUB 目录（TOC）补全
+    if toc_map:
+        existing_headings = soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
+        if not existing_headings:
+            # 从 toc_map 中查找当前 XHTML 对应的标题
+            basename = os.path.basename(xhtml_path)
+            title = toc_map.get(basename) or toc_map.get(xhtml_path)
+            if title:
+                h2 = soup.new_tag("h2")
+                h2.string = title
+                body = soup.find("body")
+                if body:
+                    body.insert(0, h2)
+                else:
+                    soup.insert(0, h2)
 
     # 获取 body 内容
     body = soup.find("body")
@@ -556,6 +630,11 @@ def convert_epub_to_markdown(epub_path: str, output_path: str = None):
         print(f"📚 Manifest 项目数: {len(manifest)}")
         print(f"📖 Spine 章节数: {len(spine)}")
 
+        # 解析 EPUB 目录（TOC），用于补全图片标题章节的文字标题
+        toc_map = parse_toc(epub_zip, opf_data.get("opf_dir", ""))
+        if toc_map:
+            print(f"📑 目录标题数: {len(toc_map)}")
+
         if not spine:
             print("⚠️  Spine 为空，尝试按 manifest 中 HTML 项的顺序处理")
             spine = [
@@ -605,6 +684,7 @@ def convert_epub_to_markdown(epub_path: str, output_path: str = None):
                 image_manifest,
                 manifest,
                 code_classes,
+                toc_map,
             )
 
             if markdown_text:
