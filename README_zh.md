@@ -42,21 +42,21 @@ pip install -r requirements.txt
 ## 用法
 
 ```bash
-# 基本用法：输出同名 .md 文件到当前目录
+# 默认：自动创建以书名命名的文件夹，包含 md、images 和原始 epub
 python3 epub2md.py book.epub
 
-# 指定输出路径
+# 指定输出路径（不创建文件夹、不复制 epub）
 python3 epub2md.py book.epub -o output/book.md
-
-# 输出到指定目录（目录会自动创建）
-python3 epub2md.py book.epub -o ./mybook/book.md
 ```
 
 ### 输出结构
 
+默认行为（`python3 epub2md.py book.epub`）：
+
 ```
-output/
-├── book.md              # 合并后的 Markdown 文件
+book/                    # 以 EPUB 文件名命名的文件夹
+├── book.epub            # 原始 EPUB 副本
+├── book.md              # 转换后的 Markdown 文件
 └── images/              # 所有提取的图片
     ├── image_0001.jpg
     ├── image_0002.png
@@ -68,7 +68,7 @@ output/
 | 参数 | 说明 |
 |------|------|
 | `epub` | EPUB 文件路径（必填） |
-| `-o, --output` | 输出 Markdown 文件路径（可选，默认同名 `.md`） |
+| `-o, --output` | 输出 Markdown 文件路径（可选，默认自动创建同名文件夹） |
 
 ## 功能特性
 

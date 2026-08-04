@@ -42,20 +42,20 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-# Basic usage: outputs a .md file with the same name in the current directory
+# Default: creates a folder named after the book, containing md, images, and the original epub
 python3 epub2md.py book.epub
 
-# Specify output path
+# Specify a custom output path (no folder or epub copy is created)
 python3 epub2md.py book.epub -o output/book.md
-
-# Output to a specific directory (created automatically)
-python3 epub2md.py book.epub -o ./mybook/book.md
 ```
 
 ### Output Structure
 
+Default behavior (`python3 epub2md.py book.epub`):
+
 ```
-output/
+book/                    # Folder named after the EPUB file
+├── book.epub            # Copy of the original EPUB
 ├── book.md              # Merged Markdown file
 └── images/              # All extracted images
     ├── image_0001.jpg
@@ -68,7 +68,7 @@ output/
 | Argument | Description |
 |----------|-------------|
 | `epub` | Path to the EPUB file (required) |
-| `-o, --output` | Output Markdown file path (optional, defaults to same-name `.md`) |
+| `-o, --output` | Output Markdown file path (optional, defaults to creating a same-name folder) |
 
 ## Features
 

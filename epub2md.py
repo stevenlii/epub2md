@@ -3,7 +3,16 @@
 epub2md.py — 将 EPUB 电子书解压并转换为 Markdown 文件
 
 用法:
-    python epub2md.py <input.epub> [-o output.md]
+    python3 epub2md.py <input.epub> [-o output.md]
+
+默认行为（不指定 -o）:
+    输入 book.epub → 生成 book/ 文件夹，包含:
+        book/
+        ├── book.epub       # 原始 EPUB 副本
+        ├── book.md         # 转换后的 Markdown
+        └── images/         # 提取的图片
+            ├── image_0001.jpg
+            └── ...
 
 功能:
     1. 解压 EPUB（本质是 ZIP）
@@ -16,6 +25,7 @@ epub2md.py — 将 EPUB 电子书解压并转换为 Markdown 文件
 import argparse
 import os
 import re
+import shutil
 import sys
 import zipfile
 from pathlib import Path
@@ -510,17 +520,26 @@ def convert_epub_to_markdown(epub_path: str, output_path: str = None):
         print(f"错误：文件不存在: {epub_path}")
         sys.exit(1)
 
-    # 输出路径
     if output_path:
+        # 用户指定了输出路径：md 放到指定位置，images 放在同级目录
         output_md = Path(output_path)
+        output_dir = output_md.parent
+        images_dir = output_dir / "images"
+        copy_epub = False
     else:
-        output_md = epub_path.with_suffix(".md")
+        # 默认行为：创建以书名命名的文件夹，把 md、images、原始 epub 都放进去
+        # 例如 book.epub → book/book.md, book/images/, book/book.epub
+        book_stem = epub_path.stem
+        output_dir = Path.cwd() / book_stem
+        output_md = output_dir / f"{book_stem}.md"
+        images_dir = output_dir / "images"
+        copy_epub = True
 
-    output_dir = output_md.parent
-    images_dir = output_dir / "images"
+    output_dir.mkdir(parents=True, exist_ok=True)
     images_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"📖 正在处理: {epub_path.name}")
+    print(f"📁 输出目录: {output_dir}")
     print(f"📝 输出 Markdown: {output_md}")
     print(f"🖼️  图片目录: {images_dir}")
 
@@ -608,10 +627,17 @@ def convert_epub_to_markdown(epub_path: str, output_path: str = None):
 
         output_md.write_text(final_md, encoding="utf-8")
 
+        # 将原始 EPUB 复制到输出目录
+        if copy_epub:
+            epub_copy = output_dir / epub_path.name
+            shutil.copy2(epub_path, epub_copy)
+
         print(f"\n✅ 转换完成！")
         print(f"   📄 Markdown 文件: {output_md}")
         print(f"   🖼️  提取图片数: {len(image_manifest)}")
         print(f"   📏 Markdown 大小: {output_md.stat().st_size / 1024:.1f} KB")
+        if copy_epub:
+            print(f"   📦 原始 EPUB: {output_dir / epub_path.name}")
 
 
 # ── CLI ────────────────────────────────────────────────────────────────────
@@ -622,13 +648,16 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-    python epub2md.py book.epub
-    python epub2md.py book.epub -o output.md
-    python epub2md.py book.epub -o ./mybook/book.md
+    # 默认：生成以书名命名的文件夹
+    python3 epub2md.py book.epub
+    → book/book.md, book/images/, book/book.epub
+
+    # 指定输出路径（不复制 EPUB）
+    python3 epub2md.py book.epub -o output.md
         """,
     )
     parser.add_argument("epub", help="EPUB 文件路径")
-    parser.add_argument("-o", "--output", default=None, help="输出 Markdown 文件路径（默认同名 .md）")
+    parser.add_argument("-o", "--output", default=None, help="输出 Markdown 文件路径（默认生成同名文件夹）")
 
     args = parser.parse_args()
     convert_epub_to_markdown(args.epub, args.output)
