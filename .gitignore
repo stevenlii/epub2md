@@ -20,6 +20,10 @@ wheels/
 .installed.cfg
 *.egg
 
+# Vendored dependencies (keep in repo so users can run without pip install)
+!libs/
+!libs/**
+
 # Virtual environments
 venv/
 env/

@@ -31,6 +31,11 @@ import zipfile
 from pathlib import Path
 from urllib.parse import unquote
 
+# 自动加载仓库内 libs/ 目录中的依赖，免去手动安装
+_LIBS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "libs")
+if os.path.isdir(_LIBS_DIR):
+    sys.path.insert(0, _LIBS_DIR)
+
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 

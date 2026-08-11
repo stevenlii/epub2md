@@ -18,25 +18,31 @@ EPUB 本质上是一个 ZIP 压缩包，里面包含 XHTML、图片、CSS 等资
 ## 环境要求
 
 - **Python 3.8+**（推荐 3.10+）
-- 依赖包（见 `requirements.txt`）：
-  - `beautifulsoup4` — HTML/XHTML 解析
-  - `markdownify` — HTML → Markdown 转换
-  - `lxml` — XML/HTML 解析引擎
+- **无需安装依赖** — 所有第三方库已内置在 `libs/` 目录中，脚本运行时自动加载。克隆即用。
 
-## 安装
+<details>
+<summary>libs/ 内置依赖列表</summary>
+
+| 包名 | 用途 |
+|------|------|
+| `beautifulsoup4` | HTML/XHTML 解析 |
+| `markdownify` | HTML → Markdown 转换 |
+| `lxml` | XML/HTML 解析引擎 |
+| `soupsieve` | bs4 的 CSS 选择器支持 |
+| `typing_extensions` | 类型注解向后兼容 |
+| `six` | Python 2/3 兼容层（bs4 依赖） |
+
+</details>
+
+## 快速开始
 
 ```bash
-# 克隆仓库
+# 克隆即用，无需 pip install
 git clone git@github.com:stevenlii/epub2md.git
 cd epub2md
 
-# 创建虚拟环境（推荐）
-python3 -m venv venv
-source venv/bin/activate    # macOS / Linux
-# venv\Scripts\activate       # Windows
-
-# 安装依赖
-pip install -r requirements.txt
+# 转换 EPUB
+python3 epub2md.py book.epub
 ```
 
 ## 用法
@@ -97,6 +103,12 @@ book/                    # 以 EPUB 文件名命名的文件夹
   - 参数名：`r`
   - 标签文字：`输出：`、`结果：`、`RAG`、`指令`
 - 修复标题层级不一致的问题（例如原书把同级小节一个标成 `h3`、一个标成 `h1`，脚本会把 `h1` 降级到 `h3`）
+
+### 目录标题提取
+
+- 当章节标题是图片（部分 EPUB 的常见做法）时，脚本会从 EPUB 的目录文件中提取文字标题（EPUB2 读 `toc.ncx`，EPUB3 读 `nav.xhtml`）
+- 提取的标题作为 `h2` 插入到章节内容前面，保证 Obsidian 大纲中能看到章节名
+- 仅在章节没有任何 `h1`–`h6` 标签时触发，已有文字标题的章节不受影响
 
 ## 示例
 

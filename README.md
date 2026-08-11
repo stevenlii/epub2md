@@ -18,25 +18,31 @@ EPUB is essentially a ZIP archive containing XHTML, images, CSS, and other resou
 ## Requirements
 
 - **Python 3.8+** (3.10+ recommended)
-- Dependencies (see `requirements.txt`):
-  - `beautifulsoup4` — HTML/XHTML parsing
-  - `markdownify` — HTML to Markdown conversion
-  - `lxml` — XML/HTML parsing engine
+- **No installation needed** — All dependencies are bundled in the `libs/` directory and automatically loaded at runtime. Just clone and run.
 
-## Installation
+<details>
+<summary>Dependencies included in <code>libs/</code></summary>
+
+| Package | Purpose |
+|---------|---------|
+| `beautifulsoup4` | HTML/XHTML parsing |
+| `markdownify` | HTML to Markdown conversion |
+| `lxml` | XML/HTML parsing engine |
+| `soupsieve` | CSS selector support for bs4 |
+| `typing_extensions` | Type hint backports |
+| `six` | Python 2/3 compatibility (used by bs4) |
+
+</details>
+
+## Quick Start
 
 ```bash
-# Clone the repository
+# Clone and run — no pip install required
 git clone git@github.com:stevenlii/epub2md.git
 cd epub2md
 
-# Create a virtual environment (recommended)
-python3 -m venv venv
-source venv/bin/activate    # macOS / Linux
-# venv\Scripts\activate       # Windows
-
-# Install dependencies
-pip install -r requirements.txt
+# Convert an EPUB
+python3 epub2md.py book.epub
 ```
 
 ## Usage
@@ -97,6 +103,12 @@ book/                    # Folder named after the EPUB file
   - Parameter names: `r`
   - Labels: `输出：`, `结果：`, `RAG`, `指令`
 - Normalizes inconsistent heading levels (e.g., an `h1` "微调" appearing after `h3` sections is demoted to `h3`)
+
+### TOC Title Extraction
+
+- When a chapter's heading is an image (common in some EPUBs), the script extracts the text title from the EPUB's table of contents (`toc.ncx` for EPUB2, `nav.xhtml` for EPUB3)
+- The extracted title is inserted as an `h2` heading before the chapter content
+- Only activates when no existing `h1`–`h6` tags are found in the chapter — chapters with text headings are left untouched
 
 ## Example
 
